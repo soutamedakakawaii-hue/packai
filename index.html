@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PackAI - AI旅行持ち物リスト</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { min-height: 100vh; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif; color: #fff; }
+.header { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 20px 24px; display: flex; align-items: center; gap: 12px; }
+.logo { width: 40px; height: 40px; background: linear-gradient(135deg, #a78bfa, #60a5fa); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.logo-text { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+.logo-sub { font-size: 11px; color: rgba(255,255,255,0.5); }
+.badge { margin-left: auto; background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.4); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #a78bfa; }
+.container { max-width: 600px; margin: 0 auto; padding: 32px 20px; }
+.title { font-size: 38px; font-weight: 900; letter-spacing: -2px; background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; line-height: 1.2; text-align: center; }
+.subtitle { color: rgba(255,255,255,0.5); font-size: 14px; text-align: center; margin-bottom: 40px; }
+.section { margin-bottom: 28px; }
+.section-label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); margin-bottom: 10px; }
+.options { display: flex; flex-wrap: wrap; gap: 8px; }
+.option-btn { padding: 9px 16px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.option-btn.selected { border: 2px solid #a78bfa; background: rgba(167,139,250,0.25); color: #a78bfa; font-weight: 700; }
+.btn-primary { width: 100%; padding: 18px; border-radius: 16px; border: none; background: linear-gradient(135deg, #a78bfa, #60a5fa); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.3s; }
+.btn-disabled { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: not-allowed; }
+.btn-secondary { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 13px; cursor: pointer; text-decoration: underline; display: block; margin: 12px auto 0; }
+.confirm-box { background: rgba(255,255,255,0.07); border-radius: 20px; padding: 24px; margin-bottom: 32px; }
+.confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.confirm-label { color: rgba(255,255,255,0.5); font-size: 13px; }
+.confirm-val { font-weight: 700; color: #a78bfa; }
+.progress-box { background: rgba(255,255,255,0.07); border-radius: 20px; padding: 20px; margin-bottom: 24px; }
+.progress-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+.progress-bar-bg { height: 8px; background: rgba(255,255,255,0.1); border-radius: 999px; }
+.progress-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #a78bfa, #60a5fa); transition: width 0.4s ease; }
+.progress-bar.done { background: linear-gradient(90deg, #34d399, #10b981); }
+.progress-info { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 8px; text-align: right; }
+.complete-msg { text-align: center; margin-top: 10px; color: #34d399; font-weight: 800; font-size: 14px; }
+.category { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08); }
+.cat-header { font-weight: 800; font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.cat-count { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 400; }
+.item-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: opacity 0.2s; }
+.item-row.checked { opacity: 0.4; }
+.checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.2); background: transparent; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; transition: all 0.2s; }
+.checkbox.checked { border: none; background: linear-gradient(135deg, #a78bfa, #60a5fa); }
+.item-name { font-size: 14px; }
+.item-name.checked { text-decoration: line-through; }
+.item-name.essential { font-weight: 600; }
+.essential-badge { margin-left: 6px; font-size: 10px; background: rgba(251,191,36,0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.item-note { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+.tips-box { background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(96,165,250,0.15)); border: 1px solid rgba(167,139,250,0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+.tips-title { font-weight: 800; font-size: 14px; margin-bottom: 12px; color: #a78bfa; }
+.tip-item { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px; padding-left: 12px; border-left: 2px solid rgba(167,139,250,0.4); }
+.btn-reset { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6); font-size: 14px; cursor: pointer; }
+.center { text-align: center; }
+.big-emoji { font-size: 60px; margin-bottom: 20px; }
+.step-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.step-sub { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 32px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const DESTINATIONS = ["国内旅行", "アジア", "ヨーロッパ", "アメリカ", "リゾート・ビーチ", "山・アウトドア"];
+const DURATIONS = ["1泊2日", "2泊3日", "3〜5日", "1週間以上"];
+const STYLES = ["観光・街歩き", "ビジネス出張", "子連れ家族旅行", "女子旅", "バックパッカー", "リゾート・のんびり"];
+const SEASONS = ["春（3〜5月）", "夏（6〜8月）", "秋（9〜11月）", "冬（12〜2月）"];
+const ICONS = {"衣類・ファッション":"👗","洗面・衛生用品":"🪥","電子機器・充電":"🔌","書類・お金":"📄","薬・健康グッズ":"💊","その他・便利グッズ":"🎒"};
+
+function generateList(destination, duration, style, season) {
+  const isOverseas = ["アジア","ヨーロッパ","アメリカ","リゾート・ビーチ"].includes(destination);
+  const isLong​​​​​​​​​​​​​​​​
+function App() {
+  const [step, setStep] = React.useState(1);
+  const [form, setForm] = React.useState({destination:"",duration:"",style:"",season:""});
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+  const [checked, setChecked] = React.useState({});
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const allSelected = form.destination&&form.duration&&form.style&&form.season;
+  const generate = () => {
+    setLoading(true);
+    setTimeout(()=>{
+      setResult(generateList(form.destination,form.duration,form.style,form.season));
+      setChecked({});
+      setLoading(false);
+      setStep(3);
+    },1200);
+  };
+  const toggle = (cat,item) => {
+    const k = cat+"__"+item;
+    setChecked(c=>({...c,[k]:!c[k]}));
+  };
+  const total = result?.categories?.reduce((a,c)=>a+c.items.length,0)||0;
+  const done = Object.values(checked).filter(Boolean).length;
+  const pct = total?Math.round(done/total*100):0;
+  return (
+    <div>
+      <div className="header">
+        <div className="logo">✈️</div>
+        <div><div className="logo-text">PackAI</div><div className="logo-sub">AI旅行持ち物リスト</div></div>
+        {result&&<div className="badge">{done}/{total} 完了</div>}
+      </div>
+      <div className="container">
+        {step===1&&(
+          <div>
+            <div className="title">旅の準備を<br/>AIにまかせよう</div>
+            <div className="subtitle">4つの質問に答えるだけで最適な持ち物リストを生成</div>
+            {[["🌏 目的地","destination",DESTINATIONS],["📅 旅行期間","duration",DURATIONS],["🎒 旅行スタイル","style",STYLES],["🌸 季節","season",SEASONS]].map(([label,key,opts])=>(
+              <div className="section" key={key}>
+                <div className="section-label">{label}</div>
+                <div className="options">
+                  {opts.map(o=>(
+                    <button key={o} className={"option-btn"+(form[key]===o?" selected":"")} onClick={()=>set(key,o)}>{o}</button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button className={"btn-primary"+(allSelected?"":" btn-disabled")} onClick={()=>allSelected&&setStep(2)}>
+              {allSelected?"✨ 次へ進む":"すべて選択してください"}
+            </button>
+          </div>
+        )}
+        {step===2&&(
+          <div className="center">
+            <div className="big-emoji">🧳</div>
+            <div className="step-title">旅の条件を確認</div>
+            <div className="step-sub">この条件で最適なリストを作成します</div>
+            <div className="confirm-box">
+              {[["目的地",form.destination,"🌏"],["期間",form.duration,"📅"],["スタイル",form.style,"🎒"],["季節",form.season,"🌸"]].map(([l,v,i])=>(
+                <div className="confirm-row" key={l}>
+                  <span className="confirm-label">{i} {l}</span>
+                  <span className="confirm-val">{v}</span>
+                </div>
+              ))}
+            </div>
+            <button className="btn-primary" onClick={generate} disabled={loading}>
+              {loading?"⏳ リストを生成中...":"🤖 リストを生成する！"}
+            </button>
+            <button className="btn-secondary" onClick={()=>setStep(1)}>条件を変更する</button>
+          </div>
+        )}
+        {step===3&&result&&(
+          <div>
+            <div className="progress-box">
+              <div className="progress-header">
+                <span style={{fontWeight:700}}>パッキング進捗</span>
+                <span style={{color:pct===100?"#34d399":"#a78bfa",fontWeight:800}}>{pct}%</span>
+              </div>
+              <div className="progress-bar-bg">
+                <div className={"progress-bar"+(pct===100?" done":"")} style={{width:pct+"%"}}></div>
+              </div>
+              {pct===100&&<div className="complete-msg">🎉 パッキング完了！良い旅を！</div>}
+              <div className="progress-info">{form.destination} | {form.duration} | {form.style} | {form.season}</div>
+            </div>
+            {result.categories.map(cat=>(
+              <div className="category" key={cat.name}>
+                <div className="cat-header">
+                  <span>{ICONS[cat.name]||"📦"}</span>
+                  <span>{cat.name}</span>
+                  <span className="cat-count">{cat.items.filter(i=>checked[cat.name+"__"+i.name]).length}/{cat.items.length}</span>
+                </div>
+                {cat.items.map(item=>{
+                  const k=cat.name+"__"+item.name;
+                  const isC=!!checked[k];
+                  return(
+                    <div className={"item-row"+(isC?" checked":"")} key={item.name} onClick={()=>toggle(cat.name,item.name)}>
+                      <div className={"checkbox"+(isC?" checked":"")}>{isC&&"✓"}</div>
+                      <div style={{flex:1}}>
+                        <div className={"item-name"+(isC?" checked":"")+(item.essential?" essential":"")}>
+                          {item.name}
+                          {item.essential&&<span className="essential-badge">必須</span>}
+                        </div>
+                        {item.note&&<div className="item-note">{item.note}</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+            {result.tips.length>0&&(
+              <div className="tips-box">
+                <div className="tips-title">💡 旅のアドバイス</div>
+                {result.tips.map((t,i)=><div className="tip-item" key={i}>{t}</div>)}
+              </div>
+            )}
+            <button className="btn-reset" onClick={()=>{setStep(1);setResult(null);setForm({destination:"",duration:"",style:"",season:""});}}>🔄 新しいリストを作る</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
